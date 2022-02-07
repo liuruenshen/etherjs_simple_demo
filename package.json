@@ -20,7 +20,11 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "postinstall": "husky install",
+    "lint-staged:eslint": "eslint --cache --fix",
+    "lint-staged:tsc": "tsc --noEmit && :",
+    "lint-staged": "run-p 'lint-staged:* {@}'"
   },
   "eslintConfig": {
     "extends": [
@@ -45,6 +49,12 @@
     "@typescript-eslint/parser": "^5.10.2",
     "eslint": "^8.8.0",
     "eslint-plugin-react": "^7.28.0",
+    "husky": "^7.0.4",
+    "lint-staged": "^12.3.3",
     "prettier": "2.5.1"
-  }
+  },
+  "lint-staged": {
+    "*.ts": "yarn lint-staged --",
+    "**/*": "prettier --write --ignore-unknown"
+  },
 }
