@@ -56,5 +56,5 @@
   "lint-staged": {
     "*.ts": "yarn lint-staged --",
     "**/*": "prettier --write --ignore-unknown"
-  },
+  }
 }
