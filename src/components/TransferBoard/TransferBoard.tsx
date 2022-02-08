@@ -21,7 +21,7 @@ import Alert from "@mui/material/Alert";
 import { styled } from "@mui/material/styles";
 
 import { isWeb3ProviderError } from "../../validators/isWeb3ProviderError";
-import { EthereumError, EtherumErrorCode } from "../../modules/EthereumError";
+import { EthereumError, EthereumErrorCode } from "../../modules/EthereumError";
 
 const ethereum = new Ethereum();
 
@@ -52,7 +52,7 @@ export function TransferBoard() {
   const [transactionSteps, setTransctionSteps] = useState([]);
   const [openDialog, setOpenDialog] = useState(false);
   const [showEthereumError, setShowEthereumError] = useState<
-    EtherumErrorCode | ""
+    EthereumErrorCode | ""
   >("");
 
   useEffect(() => {

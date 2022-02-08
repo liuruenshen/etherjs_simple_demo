@@ -1,8 +1,8 @@
-export type EtherumErrorCode = "missWeb3Provider";
+export type EthereumErrorCode = "missWeb3Provider";
 
 export class EthereumError extends Error {
-  public errorCode: EtherumErrorCode;
-  public constructor(message: string, code: EtherumErrorCode) {
+  public errorCode: EthereumErrorCode;
+  public constructor(message: string, code: EthereumErrorCode) {
     super(message);
     this.errorCode = code;
   }
