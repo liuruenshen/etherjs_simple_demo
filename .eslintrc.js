@@ -1,3 +1,5 @@
+/* eslint no-undef: "off" */
+
 module.exports = {
   env: {
     browser: true,
@@ -18,4 +20,13 @@ module.exports = {
   },
   plugins: ["react", "@typescript-eslint"],
   rules: {},
+  overrides: [
+    {
+      files: ["**/*.ts", "**/*.tsx"],
+      rules: {
+        "@typescript-eslint/no-explicit-any": ["off"],
+        "@typescript-eslint/ban-ts-comment": ["off"],
+      },
+    },
+  ],
 };
