@@ -65,14 +65,10 @@ export function TransferBoard() {
   const [showEthereumError, setShowEthereumError] = useState<
     EthereumErrorCode | ""
   >("");
-  const transferStepsPayloadRef = useRef<
-    (
-      | TransferSteps
-      | PrepareTransferStep
-      | WorkInProgressStep
-      | TransferDoneStep
-    )[]
-  >([]);
+  const transferStepsPayloadRef = useRef<{
+    steps: TransferSteps | null;
+    payloads: (PrepareTransferStep | WorkInProgressStep | TransferDoneStep)[];
+  }>({ steps: null, payloads: [] });
 
   useEffect(() => {
     async function getInfo() {
@@ -109,7 +105,7 @@ export function TransferBoard() {
 
   async function transfer() {
     // clean up previous transaction records
-    transferStepsPayloadRef.current = [];
+    transferStepsPayloadRef.current.payloads = [];
 
     try {
       for await (const payload of ethereum.transfer(
@@ -118,10 +114,10 @@ export function TransferBoard() {
         amount
       )) {
         if (isTransferStepsPayload(payload)) {
-          transferStepsPayloadRef.current = [payload];
+          transferStepsPayloadRef.current.steps = payload;
           setTransferActiveStep(payload.initStep);
         } else {
-          transferStepsPayloadRef.current.push(payload);
+          transferStepsPayloadRef.current.payloads.push(payload);
           setTransferActiveStep((step) => step + 1);
         }
       }
@@ -129,27 +125,22 @@ export function TransferBoard() {
       // force to refresh the balance after transfer succeed
       setWalletBalance("");
     } catch (e) {
-      console.error(e);
+      if (e instanceof Error) {
+        transferStepsPayloadRef.current.payloads.push(e);
+      }
     }
   }
 
   function getTransferSteps() {
-    if (transferStepsPayloadRef.current.length) {
-      const steps = transferStepsPayloadRef.current[0];
-      if (isTransferStepsPayload(steps)) {
-        return steps;
-      }
-    }
-
-    return null;
+    return transferStepsPayloadRef.current.steps;
   }
 
   function isTransferDone() {
     return (
-      !!transferStepsPayloadRef.current.length &&
+      !!transferStepsPayloadRef.current.payloads.length &&
       isDoneTransferStepPayload(
-        transferStepsPayloadRef.current[
-          transferStepsPayloadRef.current.length - 1
+        transferStepsPayloadRef.current.payloads[
+          transferStepsPayloadRef.current.payloads.length - 1
         ]
       )
     );
