@@ -3,6 +3,8 @@ import isUndefined from "lodash/isUndefined";
 import { EthereumError } from "./EthereumError";
 import * as Type from "../type";
 
+const WAIT_USER_APPROVE_ETH_ACCOUNT_REQUEST_CODE = -32002;
+
 export class Ethereum {
   private provider: ethers.providers.Web3Provider | null = null;
   private signer: ethers.providers.JsonRpcSigner | null = null;
@@ -19,7 +21,7 @@ export class Ethereum {
   }
 
   public isWaitingUserApproveAccountRequest(e: { code: number }) {
-    return e.code === -32002;
+    return e.code === WAIT_USER_APPROVE_ETH_ACCOUNT_REQUEST_CODE;
   }
 
   public async getSigner() {
@@ -56,10 +58,6 @@ export class Ethereum {
   }
 
   public async *transfer(from: string, to: string, amountString: string) {
-    console.log(
-      "🚀 ~ file: Ethereum.ts ~ line 59 ~ Ethereum ~ *transfer ~ to",
-      to
-    );
     const steps: Type.TransferSteps = {
       steps: [
         { stage: "prepare-transaction", label: "Prepare a transaction" },
@@ -81,8 +79,9 @@ export class Ethereum {
     const formattedBalance = ethers.utils.formatEther(balance);
 
     if (balance.lt(TransferAmount)) {
-      throw new Error(
-        `Insufficient balance, Transfer amount: ${formattedTransferAmount}. You have ${formattedBalance}`
+      throw new EthereumError(
+        `Insufficient balance, transfer amount: ${formattedTransferAmount}. You have ${formattedBalance}`,
+        "insufficientBalance"
       );
     }
 

@@ -11,21 +11,27 @@ import TextField from "@mui/material/TextField";
 import Button from "@mui/material/Button";
 import Stepper from "@mui/material/Stepper";
 import Step, { StepProps } from "@mui/material/Step";
-import StepLabel from "@mui/material/StepLabel";
+import StepLabel, { StepLabelProps } from "@mui/material/StepLabel";
 import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogContentText from "@mui/material/DialogContentText";
 import Alert from "@mui/material/Alert";
 import LoadingButton from "@mui/lab/LoadingButton";
+import Typography from "@mui/material/Typography";
 
 import { styled } from "@mui/material/styles";
 
-import { isWeb3ProviderError } from "../../validators/isWeb3ProviderError";
+import {
+  isWeb3ProviderError,
+  Web3ProviderError,
+  isError,
+} from "../../validators/isWeb3ProviderError";
 import { EthereumError, EthereumErrorCode } from "../../modules/EthereumError";
 import {
   isTransferStepsPayload,
   isDoneTransferStepPayload,
+  isWorkInProgressTransferStepPayload,
 } from "../../validators/isTransferStepPayload";
 import {
   TransferSteps,
@@ -60,16 +66,37 @@ export function TransferBoard() {
   const [walletBalance, setWalletBalance] = useState("");
   const [receiver, setReceiver] = useState("");
   const [amount, setAmount] = useState("");
-  const [transferActiveStep, setTransferActiveStep] = useState<number>(0);
+
   const [openDialog, setOpenDialog] = useState(false);
+
+  /**
+   * The error is thrown by the Ethereum instance, indicating
+   * there are some problems when interacting with the Web3 provider.
+   */
   const [showEthereumError, setShowEthereumError] = useState<
     EthereumErrorCode | ""
   >("");
-  const transferStepsPayloadRef = useRef<{
+
+  /**
+   * Ethereum.transfer is an async generator, which reports the ongoing transaction progress by
+   * yielding all sorts of payload; the reference here will save these payloads for further processing.
+   */
+  const [transferSteps, setTransferSteps] = useState<{
     steps: TransferSteps | null;
-    payloads: (PrepareTransferStep | WorkInProgressStep | TransferDoneStep)[];
+    payloads: (
+      | PrepareTransferStep
+      | WorkInProgressStep
+      | TransferDoneStep
+      | Web3ProviderError
+      | Error
+    )[];
   }>({ steps: null, payloads: [] });
 
+  /**
+   * Get the active wallet address & balance when the following conditions are met:
+   *  the wallet address or the balance is not known
+   *  the user reloads the app after he has been told to log in or unlock MetaMask
+   */
   useEffect(() => {
     async function getInfo() {
       try {
@@ -105,7 +132,7 @@ export function TransferBoard() {
 
   async function transfer() {
     // clean up previous transaction records
-    transferStepsPayloadRef.current.payloads = [];
+    setTransferSteps((state) => ({ ...state, payloads: [] }));
 
     try {
       for await (const payload of ethereum.transfer(
@@ -114,39 +141,39 @@ export function TransferBoard() {
         amount
       )) {
         if (isTransferStepsPayload(payload)) {
-          transferStepsPayloadRef.current.steps = payload;
-          setTransferActiveStep(payload.initStep);
+          setTransferSteps((state) => ({ ...state, steps: payload }));
         } else {
-          transferStepsPayloadRef.current.payloads.push(payload);
-          setTransferActiveStep((step) => step + 1);
+          setTransferSteps((state) => ({
+            ...state,
+            payloads: [...state.payloads, payload],
+          }));
         }
       }
 
       // force to refresh the balance after transfer succeed
       setWalletBalance("");
     } catch (e) {
-      if (e instanceof Error) {
-        transferStepsPayloadRef.current.payloads.push(e);
-      }
+      setTransferSteps((state) => ({
+        ...state,
+        payloads: [...state.payloads, ...(isError(e) ? [e] : [])],
+      }));
     }
   }
 
-  function getTransferSteps() {
-    return transferStepsPayloadRef.current.steps;
-  }
-
   function isTransferDone() {
+    const payloads = transferSteps.payloads;
+
     return (
-      !!transferStepsPayloadRef.current.payloads.length &&
-      isDoneTransferStepPayload(
-        transferStepsPayloadRef.current.payloads[
-          transferStepsPayloadRef.current.payloads.length - 1
-        ]
-      )
+      !!payloads.length &&
+      isDoneTransferStepPayload(payloads[payloads.length - 1])
     );
   }
 
-  const transferSteps = getTransferSteps();
+  function isTransferFailed() {
+    const payloads = transferSteps.payloads;
+
+    return !!payloads.length && isError(payloads[payloads.length - 1]);
+  }
 
   if (showEthereumError) {
     if (showEthereumError === "missWeb3Provider")
@@ -237,25 +264,57 @@ export function TransferBoard() {
                 justifyContent="flex-end"
                 alignItems="end"
               >
-                {transferSteps ? (
-                  <Stepper activeStep={transferActiveStep} sx={{ flexGrow: 1 }}>
-                    {transferSteps.steps.map((step, index) => {
+                {transferSteps.steps ? (
+                  <Stepper
+                    activeStep={
+                      transferSteps.payloads.length
+                        ? transferSteps.payloads.length - 1
+                        : transferSteps.steps.initStep
+                    }
+                    sx={{ flexGrow: 1 }}
+                  >
+                    {transferSteps.steps.steps.map((step, index) => {
                       const stepProps: StepProps =
-                        index === transferSteps.steps.length - 1
+                        index === transferSteps.steps!.steps.length - 1
                           ? {
                               completed: isTransferDone(),
                             }
                           : {};
+
+                      const payload = transferSteps.payloads[index];
+
+                      const stepLabelProps: StepLabelProps = {};
+                      if (isError(payload)) {
+                        stepLabelProps.optional = (
+                          <Typography variant="caption" color="error">
+                            {payload.message}
+                          </Typography>
+                        );
+                        stepLabelProps.error = true;
+                      } else if (isWorkInProgressTransferStepPayload(payload)) {
+                        stepLabelProps.optional = (
+                          <Typography variant="caption" color="info">
+                            {`TX Hash: ${payload.transactionHash}`}
+                          </Typography>
+                        );
+                      }
+
                       return (
                         <Step key={step.stage} {...stepProps}>
-                          <StepLabel>{step.label}</StepLabel>
+                          <StepLabel {...stepLabelProps}>
+                            {step.label}
+                          </StepLabel>
                         </Step>
                       );
                     })}
                   </Stepper>
                 ) : null}
                 <LoadingButton
-                  loading={!!transferSteps && !isTransferDone()}
+                  loading={
+                    !!transferSteps.steps &&
+                    !isTransferDone() &&
+                    !isTransferFailed()
+                  }
                   variant="contained"
                   onClick={() => transfer()}
                 >

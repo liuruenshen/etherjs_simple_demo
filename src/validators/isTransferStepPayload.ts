@@ -16,7 +16,7 @@ export function isPrepareTransferStepPayload(
 
 export function isWorkInProgressTransferStepPayload(
   e: unknown
-): e is Type.PrepareTransferStep {
+): e is Type.WorkInProgressStep {
   return (
     isPlainObject<Type.WorkInProgressStep>(e) && e.stage === "work-in-progress"
   );
