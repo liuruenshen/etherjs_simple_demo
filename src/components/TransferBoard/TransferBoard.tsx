@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 
 import { Ethereum } from "../../modules/Ethereum";
 
@@ -10,18 +10,29 @@ import Badge from "@mui/material/Badge";
 import TextField from "@mui/material/TextField";
 import Button from "@mui/material/Button";
 import Stepper from "@mui/material/Stepper";
-import Step from "@mui/material/Step";
+import Step, { StepProps } from "@mui/material/Step";
 import StepLabel from "@mui/material/StepLabel";
 import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogContentText from "@mui/material/DialogContentText";
 import Alert from "@mui/material/Alert";
+import LoadingButton from "@mui/lab/LoadingButton";
 
 import { styled } from "@mui/material/styles";
 
 import { isWeb3ProviderError } from "../../validators/isWeb3ProviderError";
 import { EthereumError, EthereumErrorCode } from "../../modules/EthereumError";
+import {
+  isTransferStepsPayload,
+  isDoneTransferStepPayload,
+} from "../../validators/isTransferStepPayload";
+import {
+  TransferSteps,
+  PrepareTransferStep,
+  WorkInProgressStep,
+  TransferDoneStep,
+} from "../../type";
 
 const ethereum = new Ethereum();
 
@@ -49,11 +60,19 @@ export function TransferBoard() {
   const [walletBalance, setWalletBalance] = useState("");
   const [receiver, setReceiver] = useState("");
   const [amount, setAmount] = useState("");
-  const [transactionSteps, setTransctionSteps] = useState([]);
+  const [transferActiveStep, setTransferActiveStep] = useState<number>(0);
   const [openDialog, setOpenDialog] = useState(false);
   const [showEthereumError, setShowEthereumError] = useState<
     EthereumErrorCode | ""
   >("");
+  const transferStepsPayloadRef = useRef<
+    (
+      | TransferSteps
+      | PrepareTransferStep
+      | WorkInProgressStep
+      | TransferDoneStep
+    )[]
+  >([]);
 
   useEffect(() => {
     async function getInfo() {
@@ -89,18 +108,54 @@ export function TransferBoard() {
   }, [walletAddress, walletBalance, openDialog]);
 
   async function transfer() {
+    // clean up previous transaction records
+    transferStepsPayloadRef.current = [];
+
     try {
-      for await (const message of ethereum.transfer(
+      for await (const payload of ethereum.transfer(
         walletAddress,
         receiver,
         amount
       )) {
-        console.log(message);
+        if (isTransferStepsPayload(payload)) {
+          transferStepsPayloadRef.current = [payload];
+          setTransferActiveStep(payload.initStep);
+        } else {
+          transferStepsPayloadRef.current.push(payload);
+          setTransferActiveStep((step) => step + 1);
+        }
       }
+
+      // force to refresh the balance after transfer succeed
+      setWalletBalance("");
     } catch (e) {
       console.error(e);
     }
   }
+
+  function getTransferSteps() {
+    if (transferStepsPayloadRef.current.length) {
+      const steps = transferStepsPayloadRef.current[0];
+      if (isTransferStepsPayload(steps)) {
+        return steps;
+      }
+    }
+
+    return null;
+  }
+
+  function isTransferDone() {
+    return (
+      !!transferStepsPayloadRef.current.length &&
+      isDoneTransferStepPayload(
+        transferStepsPayloadRef.current[
+          transferStepsPayloadRef.current.length - 1
+        ]
+      )
+    );
+  }
+
+  const transferSteps = getTransferSteps();
 
   if (showEthereumError) {
     if (showEthereumError === "missWeb3Provider")
@@ -191,20 +246,30 @@ export function TransferBoard() {
                 justifyContent="flex-end"
                 alignItems="end"
               >
-                <Stepper activeStep={-1} sx={{ flexGrow: 1 }}>
-                  <Step>
-                    <StepLabel>Prepare a transaction</StepLabel>
-                  </Step>
-                  <Step>
-                    <StepLabel>Work in progress</StepLabel>
-                  </Step>
-                  <Step>
-                    <StepLabel>Transaction done</StepLabel>
-                  </Step>
-                </Stepper>
-                <Button variant="contained" onClick={() => transfer()}>
+                {transferSteps ? (
+                  <Stepper activeStep={transferActiveStep} sx={{ flexGrow: 1 }}>
+                    {transferSteps.steps.map((step, index) => {
+                      const stepProps: StepProps =
+                        index === transferSteps.steps.length - 1
+                          ? {
+                              completed: isTransferDone(),
+                            }
+                          : {};
+                      return (
+                        <Step key={step.stage} {...stepProps}>
+                          <StepLabel>{step.label}</StepLabel>
+                        </Step>
+                      );
+                    })}
+                  </Stepper>
+                ) : null}
+                <LoadingButton
+                  loading={!!transferSteps && !isTransferDone()}
+                  variant="contained"
+                  onClick={() => transfer()}
+                >
                   Transfer
-                </Button>
+                </LoadingButton>
               </Stack>
             </Stack>
           </Group>

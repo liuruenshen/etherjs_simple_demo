@@ -1,4 +1,4 @@
-import isPlainObject from "lodash/isPlainObject";
+import { isPlainObject } from "../utilities/isPlainObject";
 import isFinite from "lodash/isFinite";
 
 interface Web3ProviderError {

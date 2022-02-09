@@ -1,34 +1,7 @@
 import { ethers } from "ethers";
 import isUndefined from "lodash/isUndefined";
 import { EthereumError } from "./EthereumError";
-
-declare global {
-  interface Window {
-    ethereum: any;
-  }
-}
-
-interface TransferringStep {
-  stage: "prepare-transaction" | "work-in-progress" | "done";
-  label: string;
-}
-interface TransferringSteps {
-  steps: TransferringStep[];
-  initStep: number;
-}
-
-interface PrepareTransferringStep {
-  stage: TransferringStep["stage"];
-  balance: ethers.BigNumber;
-  formattedBalance: string;
-  transferringAmount: ethers.BigNumber;
-  formattedTransferringAmount: string;
-}
-
-interface WorkInProgressStep {
-  stage: TransferringStep["stage"];
-  transactionHash: string;
-}
+import * as Type from "../type";
 
 export class Ethereum {
   private provider: ethers.providers.Web3Provider | null = null;
@@ -83,7 +56,11 @@ export class Ethereum {
   }
 
   public async *transfer(from: string, to: string, amountString: string) {
-    const steps: TransferringSteps = {
+    console.log(
+      "🚀 ~ file: Ethereum.ts ~ line 59 ~ Ethereum ~ *transfer ~ to",
+      to
+    );
+    const steps: Type.TransferSteps = {
       steps: [
         { stage: "prepare-transaction", label: "Prepare a transaction" },
         { stage: "work-in-progress", label: "Work in progress" },
@@ -98,34 +75,33 @@ export class Ethereum {
 
     const balance = await this.getWalletBalance();
 
-    const transferringAmount = ethers.utils.parseEther(amountString);
+    const TransferAmount = ethers.utils.parseEther(amountString);
 
-    const formattedTransferringAmount =
-      ethers.utils.formatEther(transferringAmount);
+    const formattedTransferAmount = ethers.utils.formatEther(TransferAmount);
     const formattedBalance = ethers.utils.formatEther(balance);
 
-    if (balance.lt(transferringAmount)) {
+    if (balance.lt(TransferAmount)) {
       throw new Error(
-        `Insufficient balance, transferring amount: ${formattedTransferringAmount}. You have ${formattedBalance}`
+        `Insufficient balance, Transfer amount: ${formattedTransferAmount}. You have ${formattedBalance}`
       );
     }
 
-    const prepareTransaction: PrepareTransferringStep = {
+    const prepareTransaction: Type.PrepareTransferStep = {
       stage: "prepare-transaction",
       balance,
       formattedBalance,
-      transferringAmount,
-      formattedTransferringAmount,
+      TransferAmount,
+      formattedTransferAmount,
     };
     yield prepareTransaction;
 
     const transaction = await signer.sendTransaction({
       from,
       to,
-      value: transferringAmount,
+      value: TransferAmount,
     });
 
-    const workInProgress: WorkInProgressStep = {
+    const workInProgress: Type.WorkInProgressStep = {
       stage: "work-in-progress",
       transactionHash: transaction.hash,
     };
@@ -133,10 +109,11 @@ export class Ethereum {
 
     const receipt = await transaction.wait();
 
-    yield {
+    const transactionDone: Type.TransferDoneStep = {
       stage: "done",
       transactionHash: transaction.hash,
-      receiptInfo: { blockNumber: receipt.blockNumber },
+      receipt: { blockNumber: receipt.blockNumber },
     };
+    yield transactionDone;
   }
 }
