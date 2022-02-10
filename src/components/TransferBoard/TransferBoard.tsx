@@ -122,6 +122,15 @@ export function TransferBoard() {
     }
   }, [walletAddress, walletBalance, openDialog]);
 
+  /**
+   * https://ethereum.stackexchange.com/questions/42768/how-can-i-detect-change-in-account-in-metamask/42810
+   */
+  useEffect(() => {
+    window.ethereum.on("accountsChanged", function () {
+      window.location.reload();
+    });
+  }, []);
+
   async function transfer() {
     // clean up previous transaction records
     setTransferSteps((state) => ({ ...state, payloads: [] }));
@@ -168,7 +177,11 @@ export function TransferBoard() {
     return !!payloads.length && isError(payloads[payloads.length - 1]);
   }
 
-  function getTransactionHash() {
+  function getCompletedTransactionHash() {
+    if (!isTransferDone()) {
+      return "";
+    }
+
     const payloads = transferSteps.payloads;
 
     const target = payloads.find((payload) =>
@@ -178,7 +191,7 @@ export function TransferBoard() {
     return target ? target.transactionHash : "";
   }
 
-  const txHash = getTransactionHash();
+  const txHash = getCompletedTransactionHash();
   if (txHash) {
     transactionHash.current = txHash;
   }

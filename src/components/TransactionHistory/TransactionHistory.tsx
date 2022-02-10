@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { backOff } from "exponential-backoff";
 
 import { DataGrid, DataGridProps } from "@mui/x-data-grid";
 import Box from "@mui/material/Box";
@@ -84,7 +85,7 @@ export function TransactionHistory({
 
   useEffect(() => {
     async function getHistory() {
-      const historyRows = ((await ethereum.getHistory()) || []).map((item) => {
+      const rows = ((await ethereum.getHistory()) || []).map((item) => {
         return {
           ...item,
           formattedEther: ethereum.getFormattedEther(item.value),
@@ -97,9 +98,29 @@ export function TransactionHistory({
         };
       });
 
-      setHistoryRows(historyRows);
+      if (
+        !rows.length ||
+        (newTransactionHash &&
+          !rows.some((item) => item.hash === newTransactionHash))
+      ) {
+        throw new Error("empty transaction history");
+      }
+
+      return rows;
     }
-    getHistory();
+
+    /**
+     * I don't know why it often returns the empty set the first time,
+     * so wrapping getHistory function call up with the backOff function to bypass this issue
+     */
+    async function backOffGetHistory() {
+      setHistoryRows(
+        (await backOff(getHistory, { numOfAttempts: 5, startingDelay: 500 })) ||
+          []
+      );
+    }
+
+    backOffGetHistory();
   }, [newTransactionHash]);
 
   return (
