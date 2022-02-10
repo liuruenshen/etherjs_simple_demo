@@ -12,3 +12,5 @@ A simple Dapp utilizes ether.js with Metamask extension to provide token transfe
 1. git clone https://github.com/liuruenshen/etherjs_simple_demo.git
 1. cd etherjs_simple_demo.git
 1. yarn start
+
+![Demo](https://user-images.githubusercontent.com/13027159/153511670-6dae3361-1618-4d42-8472-1ade76a9d1cd.png)
