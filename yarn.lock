@@ -5888,6 +5888,7 @@ __metadata:
     eslint: ^8.8.0
     eslint-plugin-react: ^7.28.0
     ethers: ^5.5.4
+    exponential-backoff: ^3.1.0
     husky: ^7.0.0
     lint-staged: ^12.3.3
     lodash: ^4.17.21
@@ -6761,6 +6762,13 @@ __metadata:
     jest-matcher-utils: ^27.5.0
     jest-message-util: ^27.5.0
   checksum: 8c8a3b5277bafadb52aced55b357c3ad91a6f30c4d5e2972e1a569887933c805c39e3cc49567807a3b1d3af24a6ff8120c65d4db10f27257134c1b17dd2b3975
+  languageName: node
+  linkType: hard
+
+"exponential-backoff@npm:^3.1.0":
+  version: 3.1.0
+  resolution: "exponential-backoff@npm:3.1.0"
+  checksum: 9367d2848044d3738b27e00f20ee2b605aecea6b3397b0c08bdf4bd48af34379ea7019c157e729101d2a7363dd6ee1ffc6d2305c4b6f80fc215da1eb73ac3f84
   languageName: node
   linkType: hard
 

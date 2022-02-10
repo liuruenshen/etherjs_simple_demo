@@ -1,6 +1,10 @@
 import React, { useEffect, useState, useRef } from "react";
 
-import { Ethereum } from "../../modules/Ethereum";
+import {
+  Ethereum,
+  TransferrableTokens,
+  TRANSFERRABLE_TOKENS,
+} from "../../modules/Ethereum";
 
 import Stack from "@mui/material/Stack";
 import Box from "@mui/material/Box";
@@ -17,6 +21,8 @@ import DialogContentText from "@mui/material/DialogContentText";
 import Alert from "@mui/material/Alert";
 import LoadingButton from "@mui/lab/LoadingButton";
 import Typography from "@mui/material/Typography";
+import Select from "@mui/material/Select";
+import MenuItem from "@mui/material/MenuItem";
 
 import { FunctionPanel } from "../../layout/FunctionPanel";
 
@@ -44,6 +50,8 @@ const ethereum = new Ethereum();
 export function TransferBoard() {
   const [walletAddress, setWalletAddress] = useState("");
   const [walletBalance, setWalletBalance] = useState("");
+  const [transferToken, setTransferToken] =
+    useState<TransferrableTokens>("ETH");
   const [receiver, setReceiver] = useState("");
   const [amount, setAmount] = useState("");
   /**
@@ -114,6 +122,15 @@ export function TransferBoard() {
     }
   }, [walletAddress, walletBalance, openDialog]);
 
+  /**
+   * https://ethereum.stackexchange.com/questions/42768/how-can-i-detect-change-in-account-in-metamask/42810
+   */
+  useEffect(() => {
+    window.ethereum.on("accountsChanged", function () {
+      window.location.reload();
+    });
+  }, []);
+
   async function transfer() {
     // clean up previous transaction records
     setTransferSteps((state) => ({ ...state, payloads: [] }));
@@ -122,7 +139,8 @@ export function TransferBoard() {
       for await (const payload of ethereum.transfer(
         walletAddress,
         receiver,
-        amount
+        amount,
+        transferToken
       )) {
         if (isTransferStepsPayload(payload)) {
           setTransferSteps((state) => ({ ...state, steps: payload }));
@@ -159,7 +177,11 @@ export function TransferBoard() {
     return !!payloads.length && isError(payloads[payloads.length - 1]);
   }
 
-  function getTransactionHash() {
+  function getCompletedTransactionHash() {
+    if (!isTransferDone()) {
+      return "";
+    }
+
     const payloads = transferSteps.payloads;
 
     const target = payloads.find((payload) =>
@@ -169,7 +191,7 @@ export function TransferBoard() {
     return target ? target.transactionHash : "";
   }
 
-  const txHash = getTransactionHash();
+  const txHash = getCompletedTransactionHash();
   if (txHash) {
     transactionHash.current = txHash;
   }
@@ -185,7 +207,11 @@ export function TransferBoard() {
   }
 
   return (
-    <Stack direction="column" spacing={3} sx={{ p: 2 }}>
+    <Stack
+      direction="column"
+      spacing={3}
+      sx={{ p: 2, height: 1, boxSizing: "border-box" }}
+    >
       <Dialog open={openDialog}>
         <DialogContent>
           <DialogContentText>
@@ -231,9 +257,22 @@ export function TransferBoard() {
           </Stack>
         </Stack>
       </FunctionPanel>
-      <FunctionPanel badgeContent="Transfer ETH">
+      <FunctionPanel badgeContent="Transfer">
         <Stack direction="column" spacing={2}>
           <Stack direction="row" spacing={2}>
+            <Select
+              label="Tokens"
+              value={transferToken}
+              onChange={(event) =>
+                setTransferToken(event.target.value as TransferrableTokens)
+              }
+            >
+              {TRANSFERRABLE_TOKENS.map((tokenName) => (
+                <MenuItem value={tokenName} key={tokenName}>
+                  {tokenName}
+                </MenuItem>
+              ))}
+            </Select>
             <TextField
               variant="filled"
               required
@@ -317,6 +356,7 @@ export function TransferBoard() {
       <TransactionHistory
         newTransactionHash={transactionHash.current}
         ethereum={ethereum}
+        containerProps={{ sxProps: { flexGrow: 1, height: 100 } }}
       ></TransactionHistory>
     </Stack>
   );

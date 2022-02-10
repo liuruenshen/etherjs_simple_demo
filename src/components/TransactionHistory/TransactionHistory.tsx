@@ -1,15 +1,17 @@
 import React, { useState, useEffect } from "react";
+import { backOff } from "exponential-backoff";
 
 import { DataGrid, DataGridProps } from "@mui/x-data-grid";
 import Box from "@mui/material/Box";
 
 import type { Ethereum } from "../../modules/Ethereum";
 
-import { FunctionPanel } from "../../layout/FunctionPanel";
+import { FunctionPanel, FunctionPanelProps } from "../../layout/FunctionPanel";
 
 export interface TransactionHistoryProps {
   ethereum: Ethereum;
   newTransactionHash: string;
+  containerProps?: Pick<FunctionPanelProps, "sxProps">;
 }
 
 const TableColumns: DataGridProps["columns"] = [
@@ -72,6 +74,7 @@ const DATE_TIME_FORMAT: Intl.DateTimeFormatOptions = {
 export function TransactionHistory({
   ethereum,
   newTransactionHash,
+  containerProps,
 }: TransactionHistoryProps) {
   type GetHistoryType = Exclude<
     GetPromiseResolvedType<ReturnType<typeof ethereum.getHistory>>,
@@ -82,7 +85,7 @@ export function TransactionHistory({
 
   useEffect(() => {
     async function getHistory() {
-      const historyRows = ((await ethereum.getHistory()) || []).map((item) => {
+      const rows = ((await ethereum.getHistory()) || []).map((item) => {
         return {
           ...item,
           formattedEther: ethereum.getFormattedEther(item.value),
@@ -95,14 +98,42 @@ export function TransactionHistory({
         };
       });
 
-      setHistoryRows(historyRows);
+      if (
+        !rows.length ||
+        (newTransactionHash &&
+          !rows.some((item) => item.hash === newTransactionHash))
+      ) {
+        throw new Error("empty transaction history");
+      }
+
+      return rows;
     }
-    getHistory();
+
+    /**
+     * I don't know why it often returns the empty set the first time,
+     * so wrapping getHistory function call up with the backOff function to bypass this issue
+     */
+    async function backOffGetHistory() {
+      try {
+        setHistoryRows(
+          (await backOff(getHistory, {
+            numOfAttempts: 8,
+            startingDelay: 500,
+          })) || []
+        );
+      } catch (e) {
+        if (e instanceof Error) {
+          console.warn(`Failed to get the transaction history: ${e.message}`);
+        }
+      }
+    }
+
+    backOffGetHistory();
   }, [newTransactionHash]);
 
   return (
-    <FunctionPanel badgeContent="History">
-      <Box sx={{ height: 300 }}>
+    <FunctionPanel badgeContent="History" {...containerProps}>
+      <Box sx={{ height: 1 }}>
         <DataGrid
           columns={TableColumns}
           rows={historyRows}

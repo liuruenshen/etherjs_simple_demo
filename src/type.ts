@@ -20,7 +20,7 @@ export interface PrepareTransferStep {
   stage: TransferStep["stage"];
   balance: ethers.BigNumber;
   formattedBalance: string;
-  TransferAmount: ethers.BigNumber;
+  transferAmount: ethers.BigNumber;
   formattedTransferAmount: string;
 }
 
