@@ -194,7 +194,11 @@ export function TransferBoard() {
   }
 
   return (
-    <Stack direction="column" spacing={3} sx={{ p: 2 }}>
+    <Stack
+      direction="column"
+      spacing={3}
+      sx={{ p: 2, height: 1, boxSizing: "border-box" }}
+    >
       <Dialog open={openDialog}>
         <DialogContent>
           <DialogContentText>
@@ -339,6 +343,7 @@ export function TransferBoard() {
       <TransactionHistory
         newTransactionHash={transactionHash.current}
         ethereum={ethereum}
+        containerProps={{ sxProps: { flexGrow: 1, height: 100 } }}
       ></TransactionHistory>
     </Stack>
   );

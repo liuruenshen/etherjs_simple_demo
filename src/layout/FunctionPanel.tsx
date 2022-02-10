@@ -1,6 +1,6 @@
 import React, { PropsWithChildren } from "react";
 
-import Paper from "@mui/material/Paper";
+import Paper, { PaperProps } from "@mui/material/Paper";
 import Badge from "@mui/material/Badge";
 import Box from "@mui/material/Box";
 
@@ -16,6 +16,7 @@ const TitleBadge = styled(Badge)(({ theme }) => ({
   },
   "&": {
     display: "block",
+    height: "100%",
   },
 }));
 
@@ -23,18 +24,22 @@ const Group = styled(Box)(({ theme }) => ({
   border: `1px solid ${theme.extendBackground.light}`,
   padding: "22px 16px 16px 16px",
   borderRadius: "4px",
+  height: "100%",
+  boxSizing: "border-box",
 }));
 
 export interface FunctionPanelProps {
   badgeContent: string;
+  sxProps?: PaperProps["sx"];
 }
 
 export function FunctionPanel({
   children,
   badgeContent,
+  sxProps,
 }: PropsWithChildren<FunctionPanelProps>) {
   return (
-    <Paper sx={{ p: 0 }} elevation={0}>
+    <Paper sx={{ p: 0, ...sxProps }} elevation={0}>
       <TitleBadge badgeContent={badgeContent}>
         <Group>{children}</Group>
       </TitleBadge>

@@ -5,11 +5,12 @@ import Box from "@mui/material/Box";
 
 import type { Ethereum } from "../../modules/Ethereum";
 
-import { FunctionPanel } from "../../layout/FunctionPanel";
+import { FunctionPanel, FunctionPanelProps } from "../../layout/FunctionPanel";
 
 export interface TransactionHistoryProps {
   ethereum: Ethereum;
   newTransactionHash: string;
+  containerProps?: Pick<FunctionPanelProps, "sxProps">;
 }
 
 const TableColumns: DataGridProps["columns"] = [
@@ -72,6 +73,7 @@ const DATE_TIME_FORMAT: Intl.DateTimeFormatOptions = {
 export function TransactionHistory({
   ethereum,
   newTransactionHash,
+  containerProps,
 }: TransactionHistoryProps) {
   type GetHistoryType = Exclude<
     GetPromiseResolvedType<ReturnType<typeof ethereum.getHistory>>,
@@ -101,8 +103,8 @@ export function TransactionHistory({
   }, [newTransactionHash]);
 
   return (
-    <FunctionPanel badgeContent="History">
-      <Box sx={{ height: 300 }}>
+    <FunctionPanel badgeContent="History" {...containerProps}>
+      <Box sx={{ height: 1 }}>
         <DataGrid
           columns={TableColumns}
           rows={historyRows}
