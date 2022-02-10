@@ -2758,6 +2758,22 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@mui/x-data-grid@npm:^5.5.0":
+  version: 5.5.0
+  resolution: "@mui/x-data-grid@npm:5.5.0"
+  dependencies:
+    "@mui/utils": ^5.3.0
+    clsx: ^1.1.1
+    prop-types: ^15.8.1
+    reselect: ^4.1.5
+  peerDependencies:
+    "@mui/material": ^5.2.8
+    "@mui/system": ^5.2.8
+    react: ^17.0.2
+  checksum: cbd9b4c03f3eb58e299b5dfbd86de36573ed97d5ef093fa49638d17665c7d0753d02d39f0797d5c59926aa0bd2a8c3b3b9f285753d13420308755e22d227a41f
+  languageName: node
+  linkType: hard
+
 "@nodelib/fs.scandir@npm:2.1.5":
   version: 2.1.5
   resolution: "@nodelib/fs.scandir@npm:2.1.5"
@@ -5858,6 +5874,7 @@ __metadata:
     "@fontsource/roboto": ^4.5.3
     "@mui/lab": ^5.0.0-alpha.68
     "@mui/material": ^5.4.0
+    "@mui/x-data-grid": ^5.5.0
     "@testing-library/jest-dom": ^5.14.1
     "@testing-library/react": ^12.0.0
     "@testing-library/user-event": ^13.2.1
@@ -11082,7 +11099,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"prop-types@npm:^15.6.2, prop-types@npm:^15.7.2":
+"prop-types@npm:^15.6.2, prop-types@npm:^15.7.2, prop-types@npm:^15.8.1":
   version: 15.8.1
   resolution: "prop-types@npm:15.8.1"
   dependencies:
@@ -11552,6 +11569,13 @@ __metadata:
   version: 1.0.0
   resolution: "requires-port@npm:1.0.0"
   checksum: eee0e303adffb69be55d1a214e415cf42b7441ae858c76dfc5353148644f6fd6e698926fc4643f510d5c126d12a705e7c8ed7e38061113bdf37547ab356797ff
+  languageName: node
+  linkType: hard
+
+"reselect@npm:^4.1.5":
+  version: 4.1.5
+  resolution: "reselect@npm:4.1.5"
+  checksum: 54c13c1e795b2ea70cba8384138aebe78adda00cbea303cc94b64da0a70d74c896cc9a03115ae38b8bff990e7a60dcd6452ab68cbec01b0b38c1afda70714cf0
   languageName: node
   linkType: hard
 

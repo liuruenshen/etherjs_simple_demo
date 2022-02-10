@@ -1,4 +1,7 @@
-export type EthereumErrorCode = "missWeb3Provider" | "insufficientBalance";
+export type EthereumErrorCode =
+  | "missWeb3Provider"
+  | "insufficientBalance"
+  | "needInitialize";
 
 export class EthereumError extends Error {
   public errorCode: EthereumErrorCode;
