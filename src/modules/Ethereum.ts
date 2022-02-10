@@ -2,7 +2,7 @@ import { ethers } from "ethers";
 import isUndefined from "lodash/isUndefined";
 import { EthereumError } from "./EthereumError";
 import * as Type from "../type";
-import erc20ContractAbi from "./contract/FaucetToken.json";
+import fauContractAbi from "./contract/FaucetToken.json";
 
 const WAIT_USER_APPROVE_ETH_ACCOUNT_REQUEST_CODE = -32002;
 const DEFAULT_NETWORK = "ropsten";
@@ -23,7 +23,7 @@ export class Ethereum {
   private web3Provider: ethers.providers.Web3Provider | null = null;
   private etherScanProivder: ethers.providers.EtherscanProvider | null = null;
   private signer: ethers.providers.JsonRpcSigner | null = null;
-  private _erc20Contract: ethers.Contract | null = null;
+  private fauContract: ethers.Contract | null = null;
 
   public initialize() {
     if (isUndefined(window.ethereum)) {
@@ -47,9 +47,9 @@ export class Ethereum {
      * Ethereum ERC20 Token Faucet: https://erc20faucet.com/
      * View FAU transactions on the Ropsten network: https://ropsten.etherscan.io/token/0xfab46e002bbf0b4509813474841e0716e6730136
      */
-    this._erc20Contract = new ethers.Contract(
+    this.fauContract = new ethers.Contract(
       "0xfab46e002bbf0b4509813474841e0716e6730136",
-      erc20ContractAbi,
+      fauContractAbi,
       this.web3Provider
     );
   }
@@ -119,10 +119,6 @@ export class Ethereum {
     }
 
     return this.web3Provider.getBlock(blockNumber);
-  }
-
-  public get erc20Contract() {
-    return this._erc20Contract;
   }
 
   public async *contractTransfer(
@@ -238,7 +234,7 @@ export class Ethereum {
         yield payload;
       }
     } else if (token === "FAU") {
-      if (!this._erc20Contract) {
+      if (!this.fauContract) {
         throw new EthereumError(
           "Call initialize method before performing contract transfer",
           "needInitialize"
@@ -246,7 +242,7 @@ export class Ethereum {
       }
 
       for await (const payload of this.contractTransfer(
-        this._erc20Contract,
+        this.fauContract,
         from,
         to,
         amountString

@@ -114,10 +114,18 @@ export function TransactionHistory({
      * so wrapping getHistory function call up with the backOff function to bypass this issue
      */
     async function backOffGetHistory() {
-      setHistoryRows(
-        (await backOff(getHistory, { numOfAttempts: 5, startingDelay: 500 })) ||
-          []
-      );
+      try {
+        setHistoryRows(
+          (await backOff(getHistory, {
+            numOfAttempts: 8,
+            startingDelay: 500,
+          })) || []
+        );
+      } catch (e) {
+        if (e instanceof Error) {
+          console.warn(`Failed to get the transaction history: ${e.message}`);
+        }
+      }
     }
 
     backOffGetHistory();
