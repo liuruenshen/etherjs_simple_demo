@@ -13,6 +13,8 @@ const TitleBadge = styled(Badge)(({ theme }) => ({
     background: `${theme.extendBackground.light}`,
     fontSize: "0.8em",
     right: "unset",
+    transformOrigin: "0 0",
+    transform: "scale(1) translate(30px, -50%)",
   },
   "&": {
     display: "block",
