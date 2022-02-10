@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 
 import { AppTheme } from "../../styles/theme";
 import { MainLayout } from "../../layout/MainLayout";

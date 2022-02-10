@@ -1,12 +1,10 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState } from "react";
 
 import { Ethereum } from "../../modules/Ethereum";
 
 import Stack from "@mui/material/Stack";
 import Box from "@mui/material/Box";
-import Paper from "@mui/material/Paper";
 import Divider from "@mui/material/Divider";
-import Badge from "@mui/material/Badge";
 import TextField from "@mui/material/TextField";
 import Button from "@mui/material/Button";
 import Stepper from "@mui/material/Stepper";
@@ -20,7 +18,7 @@ import Alert from "@mui/material/Alert";
 import LoadingButton from "@mui/lab/LoadingButton";
 import Typography from "@mui/material/Typography";
 
-import { styled } from "@mui/material/styles";
+import { FunctionPanel } from "../../layout/FunctionPanel";
 
 import {
   isWeb3ProviderError,
@@ -41,25 +39,6 @@ import {
 } from "../../type";
 
 const ethereum = new Ethereum();
-
-const TitleBadge = styled(Badge)(({ theme }) => ({
-  "& .MuiBadge-badge": {
-    left: 0,
-    borderRadius: 2,
-    background: `${theme.extendBackground.light}`,
-    fontSize: "0.8em",
-    right: "unset",
-  },
-  "&": {
-    display: "block",
-  },
-}));
-
-const Group = styled(Box)(({ theme }) => ({
-  border: `1px solid ${theme.extendBackground.light}`,
-  padding: "22px 16px 16px 16px",
-  borderRadius: "4px",
-}));
 
 export function TransferBoard() {
   const [walletAddress, setWalletAddress] = useState("");
@@ -204,127 +183,117 @@ export function TransferBoard() {
           </Button>
         </DialogActions>
       </Dialog>
-      <Paper sx={{ p: 0 }} elevation={0}>
-        <TitleBadge badgeContent="Information">
-          <Group>
-            <Stack direction="row" spacing={2}>
-              <Stack
-                direction="row"
-                spacing={1}
-                sx={(theme) => ({
-                  background: theme.extendBackground.light,
-                  p: 2,
-                })}
+      <FunctionPanel badgeContent="Information">
+        <Stack direction="row" spacing={2}>
+          <Stack
+            direction="row"
+            spacing={1}
+            sx={(theme) => ({
+              background: theme.extendBackground.light,
+              p: 2,
+            })}
+          >
+            <Box>Wallet Address</Box>
+            <Divider orientation="vertical"></Divider>
+            <Box>{walletAddress}</Box>
+          </Stack>
+          <Stack
+            direction="row"
+            spacing={1}
+            sx={(theme) => ({
+              background: theme.extendBackground.light,
+              p: 2,
+            })}
+          >
+            <Box>Balance</Box>
+            <Divider orientation="vertical"></Divider>
+            <Box>{walletBalance}</Box>
+          </Stack>
+        </Stack>
+      </FunctionPanel>
+      <FunctionPanel badgeContent="Transfer ETH">
+        <Stack direction="column" spacing={2}>
+          <Stack direction="row" spacing={2}>
+            <TextField
+              variant="filled"
+              required
+              label="Receiver Address"
+              fullWidth
+              value={receiver}
+              onChange={(event) => setReceiver(event.target.value)}
+            ></TextField>
+            <TextField
+              variant="filled"
+              value={amount}
+              required
+              label="Amount"
+              type="number"
+              onChange={(event) => setAmount(event.target.value)}
+            ></TextField>
+          </Stack>
+          <Stack
+            direction="row"
+            spacing={2}
+            justifyContent="flex-end"
+            alignItems="end"
+          >
+            {transferSteps.steps ? (
+              <Stepper
+                activeStep={
+                  transferSteps.payloads.length
+                    ? transferSteps.payloads.length - 1
+                    : transferSteps.steps.initStep
+                }
+                sx={{ flexGrow: 1 }}
               >
-                <Box>Wallet Address</Box>
-                <Divider orientation="vertical"></Divider>
-                <Box>{walletAddress}</Box>
-              </Stack>
-              <Stack
-                direction="row"
-                spacing={1}
-                sx={(theme) => ({
-                  background: theme.extendBackground.light,
-                  p: 2,
-                })}
-              >
-                <Box>Balance</Box>
-                <Divider orientation="vertical"></Divider>
-                <Box>{walletBalance}</Box>
-              </Stack>
-            </Stack>
-          </Group>
-        </TitleBadge>
-      </Paper>
-      <Paper sx={{ p: 0 }} elevation={0}>
-        <TitleBadge badgeContent="Transfer ETH">
-          <Group>
-            <Stack direction="column" spacing={2}>
-              <Stack direction="row" spacing={2}>
-                <TextField
-                  variant="filled"
-                  required
-                  label="Receiver Address"
-                  fullWidth
-                  value={receiver}
-                  onChange={(event) => setReceiver(event.target.value)}
-                ></TextField>
-                <TextField
-                  variant="filled"
-                  value={amount}
-                  required
-                  label="Amount"
-                  type="number"
-                  onChange={(event) => setAmount(event.target.value)}
-                ></TextField>
-              </Stack>
-              <Stack
-                direction="row"
-                spacing={2}
-                justifyContent="flex-end"
-                alignItems="end"
-              >
-                {transferSteps.steps ? (
-                  <Stepper
-                    activeStep={
-                      transferSteps.payloads.length
-                        ? transferSteps.payloads.length - 1
-                        : transferSteps.steps.initStep
-                    }
-                    sx={{ flexGrow: 1 }}
-                  >
-                    {transferSteps.steps.steps.map((step, index) => {
-                      const stepProps: StepProps =
-                        index === transferSteps.steps!.steps.length - 1
-                          ? {
-                              completed: isTransferDone(),
-                            }
-                          : {};
+                {transferSteps.steps.steps.map((step, index) => {
+                  const stepProps: StepProps =
+                    index === transferSteps.steps!.steps.length - 1
+                      ? {
+                          completed: isTransferDone(),
+                        }
+                      : {};
 
-                      const payload = transferSteps.payloads[index];
+                  const payload = transferSteps.payloads[index];
 
-                      const stepLabelProps: StepLabelProps = {};
-                      if (isError(payload)) {
-                        stepLabelProps.optional = (
-                          <Typography variant="caption" color="error">
-                            {payload.message}
-                          </Typography>
-                        );
-                        stepLabelProps.error = true;
-                      } else if (isWorkInProgressTransferStepPayload(payload)) {
-                        stepLabelProps.optional = (
-                          <Typography variant="caption" color="info">
-                            {`TX Hash: ${payload.transactionHash}`}
-                          </Typography>
-                        );
-                      }
-
-                      return (
-                        <Step key={step.stage} {...stepProps}>
-                          <StepLabel {...stepLabelProps}>
-                            {step.label}
-                          </StepLabel>
-                        </Step>
-                      );
-                    })}
-                  </Stepper>
-                ) : null}
-                <LoadingButton
-                  loading={
-                    !!transferSteps.steps &&
-                    !isTransferDone() &&
-                    !isTransferFailed()
+                  const stepLabelProps: StepLabelProps = {};
+                  if (isError(payload)) {
+                    stepLabelProps.optional = (
+                      <Typography variant="caption" color="error">
+                        {payload.message}
+                      </Typography>
+                    );
+                    stepLabelProps.error = true;
+                  } else if (isWorkInProgressTransferStepPayload(payload)) {
+                    stepLabelProps.optional = (
+                      <Typography variant="caption" color="info">
+                        {`TX Hash: ${payload.transactionHash}`}
+                      </Typography>
+                    );
                   }
-                  variant="contained"
-                  onClick={() => transfer()}
-                >
-                  Transfer
-                </LoadingButton>
-              </Stack>
-            </Stack>
-          </Group>
-        </TitleBadge>
-      </Paper>
+
+                  return (
+                    <Step key={step.stage} {...stepProps}>
+                      <StepLabel {...stepLabelProps}>{step.label}</StepLabel>
+                    </Step>
+                  );
+                })}
+              </Stepper>
+            ) : null}
+            <LoadingButton
+              loading={
+                !!transferSteps.steps &&
+                !isTransferDone() &&
+                !isTransferFailed()
+              }
+              variant="contained"
+              onClick={() => transfer()}
+            >
+              Transfer
+            </LoadingButton>
+          </Stack>
+        </Stack>
+      </FunctionPanel>
     </Stack>
   );
 }
