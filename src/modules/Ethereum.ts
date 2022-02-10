@@ -49,6 +49,14 @@ export class Ethereum {
     return this.signer;
   }
 
+  public getFormattedEther(value: ethers.BigNumberish) {
+    return ethers.utils.formatEther(value);
+  }
+
+  public getFormattedGwei(value: ethers.BigNumberish) {
+    return ethers.utils.formatUnits(value, "gwei");
+  }
+
   public async getWalletAddress() {
     const signer = await this.getSigner();
 
@@ -69,6 +77,17 @@ export class Ethereum {
 
   public async getHistory() {
     return this.etherScanProivder?.getHistory(this.getWalletAddress());
+  }
+
+  public getBlock(blockNumber: number) {
+    if (!this.web3Provider) {
+      throw new EthereumError(
+        "call initialize before getting the transaction detail",
+        "needInitialize"
+      );
+    }
+
+    return this.web3Provider.getBlock(blockNumber);
   }
 
   public async *transfer(from: string, to: string, amountString: string) {

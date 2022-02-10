@@ -33,8 +33,8 @@ export function MainLayout({ children }: PropsWithChildren<unknown>) {
             height: "80%",
           },
           [theme.breakpoints.up("lg")]: {
-            width: "60%",
-            height: "60%",
+            width: "70%",
+            height: "70%",
           },
         })}
       >

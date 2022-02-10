@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 
 import { Ethereum } from "../../modules/Ethereum";
 
@@ -37,6 +37,7 @@ import {
   WorkInProgressStep,
   TransferDoneStep,
 } from "../../type";
+import { TransactionHistory } from "../TransactionHistory/TransactionHistory";
 
 const ethereum = new Ethereum();
 
@@ -45,6 +46,10 @@ export function TransferBoard() {
   const [walletBalance, setWalletBalance] = useState("");
   const [receiver, setReceiver] = useState("");
   const [amount, setAmount] = useState("");
+  /**
+   * Save the latest transaction hash for displaying the detail of the transaction
+   */
+  const transactionHash = useRef<string>("");
 
   const [openDialog, setOpenDialog] = useState(false);
 
@@ -154,6 +159,21 @@ export function TransferBoard() {
     return !!payloads.length && isError(payloads[payloads.length - 1]);
   }
 
+  function getTransactionHash() {
+    const payloads = transferSteps.payloads;
+
+    const target = payloads.find((payload) =>
+      isWorkInProgressTransferStepPayload(payload)
+    ) as WorkInProgressStep | undefined;
+
+    return target ? target.transactionHash : "";
+  }
+
+  const txHash = getTransactionHash();
+  if (txHash) {
+    transactionHash.current = txHash;
+  }
+
   if (showEthereumError) {
     if (showEthereumError === "missWeb3Provider")
       return (
@@ -165,7 +185,7 @@ export function TransferBoard() {
   }
 
   return (
-    <Stack direction="column" spacing={3} sx={{ p: 3 }}>
+    <Stack direction="column" spacing={3} sx={{ p: 2 }}>
       <Dialog open={openDialog}>
         <DialogContent>
           <DialogContentText>
@@ -294,6 +314,10 @@ export function TransferBoard() {
           </Stack>
         </Stack>
       </FunctionPanel>
+      <TransactionHistory
+        newTransactionHash={transactionHash.current}
+        ethereum={ethereum}
+      ></TransactionHistory>
     </Stack>
   );
 }
