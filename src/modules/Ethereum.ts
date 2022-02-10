@@ -4,9 +4,11 @@ import { EthereumError } from "./EthereumError";
 import * as Type from "../type";
 
 const WAIT_USER_APPROVE_ETH_ACCOUNT_REQUEST_CODE = -32002;
+const DEFAULT_NETWORK = "ropsten";
 
 export class Ethereum {
-  private provider: ethers.providers.Web3Provider | null = null;
+  private web3Provider: ethers.providers.Web3Provider | null = null;
+  private etherScanProivder: ethers.providers.EtherscanProvider | null = null;
   private signer: ethers.providers.JsonRpcSigner | null = null;
 
   public initialize() {
@@ -17,7 +19,15 @@ export class Ethereum {
       );
     }
 
-    this.provider = new ethers.providers.Web3Provider(window.ethereum);
+    this.web3Provider = new ethers.providers.Web3Provider(
+      window.ethereum,
+      DEFAULT_NETWORK
+    );
+
+    this.etherScanProivder = new ethers.providers.EtherscanProvider(
+      DEFAULT_NETWORK,
+      process.env.REACT_APP_ETHERSCAN_API_KEY
+    );
   }
 
   public isWaitingUserApproveAccountRequest(e: { code: number }) {
@@ -29,12 +39,12 @@ export class Ethereum {
       return this.signer;
     }
 
-    if (!this.provider) {
+    if (!this.web3Provider) {
       this.initialize();
     }
 
-    await this.provider!.send("eth_requestAccounts", []);
-    this.signer = this.provider!.getSigner();
+    await this.web3Provider!.send("eth_requestAccounts", []);
+    this.signer = this.web3Provider!.getSigner();
 
     return this.signer;
   }
@@ -55,6 +65,10 @@ export class Ethereum {
     const balance = await this.getWalletBalance();
 
     return ethers.utils.formatEther(balance);
+  }
+
+  public async getHistory() {
+    return this.etherScanProivder?.getHistory(this.getWalletAddress());
   }
 
   public async *transfer(from: string, to: string, amountString: string) {
